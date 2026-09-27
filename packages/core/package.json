@@ -1,0 +1,14 @@
+{
+  "name": "@whythis/core",
+  "version": "0.1.0",
+  "description": "Shared metadata and registry for WhyThis",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": { "build": "tsc -b" }
+}

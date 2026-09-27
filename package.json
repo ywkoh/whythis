@@ -1,0 +1,29 @@
+{
+  "name": "whythis-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "playground/vue-vite"
+  ],
+  "scripts": {
+    "build": "tsc -b packages/core packages/vue packages/vite",
+    "test": "vitest run",
+    "dev": "npm run build && npm --workspace @whythis/playground run dev",
+    "build:playground": "npm run build && npm --workspace @whythis/playground run build",
+    "verify:production": "npm run build:playground && ! rg -i 'data-whythis-id|__whythis__|__whythis_overlay__' playground/vue-vite/dist"
+  },
+  "devDependencies": {
+    "@babel/parser": "^7.27.0",
+    "@babel/traverse": "^7.27.0",
+    "@types/babel__traverse": "^7.20.7",
+    "@types/node": "^22.13.4",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "@vue/compiler-dom": "^3.5.13",
+    "@vue/compiler-sfc": "^3.5.13",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "vitest": "^3.0.5",
+    "vue": "^3.5.13"
+  }
+}
