@@ -3,6 +3,16 @@
   "version": "0.1.0",
   "description": "Development runtime overlay for WhyThis Vue",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ywkoh/whythis.git",
+    "directory": "packages/vue"
+  },
+  "bugs": {
+    "url": "https://github.com/ywkoh/whythis/issues"
+  },
+  "keywords": ["whythis", "vue", "vue3", "debugging", "devtools", "developer-tools", "overlay", "template"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -15,6 +25,9 @@
   },
   "peerDependencies": {
     "vue": "^3.4.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": { "build": "tsc -b" }
 }

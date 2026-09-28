@@ -3,6 +3,16 @@
   "version": "0.1.0",
   "description": "Shared metadata and registry for WhyThis",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ywkoh/whythis.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/ywkoh/whythis/issues"
+  },
+  "keywords": ["whythis", "vue", "vite", "debugging", "developer-tools"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -10,5 +20,8 @@
     }
   },
   "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": { "build": "tsc -b" }
 }

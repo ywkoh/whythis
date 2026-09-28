@@ -3,6 +3,16 @@
   "version": "0.1.0",
   "description": "Development-only Vue SFC instrumentation for WhyThis",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ywkoh/whythis.git",
+    "directory": "packages/vite"
+  },
+  "bugs": {
+    "url": "https://github.com/ywkoh/whythis/issues"
+  },
+  "keywords": ["whythis", "vite", "vite-plugin", "vue", "vue3", "debugging", "developer-tools", "template"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -19,6 +29,9 @@
   },
   "peerDependencies": {
     "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": { "build": "tsc -b" }
 }
