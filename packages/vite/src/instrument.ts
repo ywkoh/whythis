@@ -74,13 +74,10 @@ function appendRegistration(
   ].join('\n')
 
   if (descriptor.script) {
-    const blockSource = source.slice(
-      descriptor.script.loc.start.offset,
-      descriptor.script.loc.end.offset
-    )
-    const closeOffset = blockSource.lastIndexOf('</script>')
     return {
-      offset: descriptor.script.loc.start.offset + closeOffset,
+      // Vue SFC block locations begin after the opening tag and end at the
+      // opening `<` of the closing tag, so this is safely inside the script.
+      offset: descriptor.script.loc.end.offset,
       text: registration
     }
   }
@@ -119,11 +116,9 @@ export function instrumentVueSfc(source: string, options: InstrumentOptions): In
     return null
   }
 
-  // SFC block locations include the `<template>` tag. Scan its close rather
-  // than searching for content, because content may repeat an attribute value.
-  const templateOpenEnd = findStartTagEnd(source, template.loc.start.offset)
-  if (templateOpenEnd === null) return null
-  const contentOffset = templateOpenEnd + 1
+  // Vue SFC template locations start at template content, immediately after
+  // the opening `<template>` tag.
+  const contentOffset = template.loc.start.offset
 
   const file = projectPath(options.filename, options.root)
   const bindings: BindingMetadata[] = []
@@ -209,7 +204,9 @@ export function instrumentVueSfc(source: string, options: InstrumentOptions): In
   for (const element of elements.values()) {
     const end = findStartTagEnd(source, element.startOffset)
     if (end !== null) {
-      insertions.push({ offset: end, text: ` data-whythis-id="${element.id}"` })
+      // Keep the slash at the end of a self-closing element (`<input />`).
+      const offset = source[end - 1] === '/' ? end - 1 : end
+      insertions.push({ offset, text: ` data-whythis-id="${element.id}"` })
     }
   }
   insertions.push(appendRegistration(source, parsed.descriptor, file, bindings))

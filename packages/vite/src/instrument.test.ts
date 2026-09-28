@@ -46,6 +46,29 @@ describe('instrumentVueSfc', () => {
     expect(result.code).toContain('<script lang="ts">')
   })
 
+  it('keeps IDs in opening tags and registers inside a normal script block', () => {
+    const normalScriptSource = `<script lang="ts">
+const label = 'Ready'
+</script>
+
+<template>
+  <input :placeholder="label" />
+  <p>{{ label }}</p>
+</template>`
+    const result = instrumentVueSfc(normalScriptSource, {
+      filename: '/workspace/src/NormalScript.vue',
+      root: '/workspace',
+      enabled: true
+    })!
+
+    expect(result.code).toContain('<input :placeholder="label"  data-whythis-id="wt-el-')
+    expect(result.code).toContain('data-whythis-id="wt-el-')
+    expect(result.code).not.toContain('</p data-whythis-id')
+    expect(result.code).toContain("const label = 'Ready'\n\nimport { registerMetadata")
+    expect(result.code).toContain("__WHYTHIS_registerMetadata(")
+    expect(result.code).toContain("\n</script>")
+  })
+
   it('uses stable source IDs', () => {
     expect(instrument().bindings.map((binding) => binding.id)).toEqual(
       instrument().bindings.map((binding) => binding.id)
