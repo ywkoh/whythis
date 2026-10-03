@@ -17,6 +17,7 @@
   "scripts": {
     "build": "tsc -b packages/core packages/vue packages/vite",
     "test": "vitest run",
+    "test:browser": "npm run build && node scripts/browser-smoke.mjs",
     "dev": "npm run build && npm --workspace @whythis/playground run dev",
     "build:playground": "npm run build && npm --workspace @whythis/playground run build",
     "verify:production": "npm run build:playground && ! rg -i 'data-whythis-id|__whythis__|__whythis_overlay__' playground/vue-vite/dist"

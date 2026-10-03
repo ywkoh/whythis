@@ -35,29 +35,29 @@ describe('trace formatting', () => {
   })
 
   it('labels template dependencies as direct', () => {
-    expect(
-      traceAsText({
-        selected: '<button disabled>',
-        component: 'OrderButton',
-        source: 'src/OrderButton.vue',
-        bindings: [
-          {
-            binding: {
-              id: 'wt-a',
-              elementId: 'wt-el-a',
-              file: 'src/OrderButton.vue',
-              element: 'button',
-              bindingType: 'attribute',
-              bindingName: 'disabled',
-              expression: '!canOrder',
-              dependencies: ['canOrder'],
-              line: 8
-            },
-            result: true,
-            dependencies: [{ path: 'canOrder', status: 'available', value: false }]
-          }
-        ]
-      })
-    ).toContain('Direct dependency: canOrder = false')
+    const output = traceAsText({
+      selected: '<button disabled>',
+      component: 'OrderButton',
+      source: 'src/OrderButton.vue',
+      bindings: [
+        {
+          binding: {
+            id: 'wt-a',
+            elementId: 'wt-el-a',
+            file: 'src/OrderButton.vue',
+            element: 'button',
+            bindingType: 'attribute',
+            bindingName: 'disabled',
+            expression: '!canOrder',
+            dependencies: ['canOrder'],
+            line: 8
+          },
+          result: true,
+          dependencies: [{ path: 'canOrder', status: 'available', value: false }]
+        }
+      ]
+    })
+    expect(output).toContain('Direct dependency: canOrder = false')
+    expect(output).toContain('Location: src/OrderButton.vue:8')
   })
 })

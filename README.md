@@ -55,3 +55,11 @@ npm test
 ```
 
 Tests cover SFC/template analysis, IDs, expression dependencies (including member expressions), the registry/HMR replacement, runtime adapter behavior, and disabled production instrumentation.
+
+To run the browser smoke test for the playground's Order button, install Chrome or Chromium and run:
+
+```bash
+npm run test:browser
+```
+
+Set `CHROME_PATH` if the browser executable is outside the standard macOS or Linux locations. This checks the disabled and enabled button trace, source line, copied text, and picker click suppression in a real browser.

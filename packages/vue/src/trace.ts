@@ -114,9 +114,10 @@ export function traceAsText(trace: SelectionTrace): string {
   for (const entry of trace.bindings) {
     const { binding } = entry
     lines.push('', `Binding: ${binding.bindingType === 'text' ? `{{ ${binding.expression} }}` : `:${binding.bindingName}="${binding.expression}"`}`)
-    lines.push(
-      `Current result: ${binding.bindingName ?? 'text'} = ${formatValue(entry.result)}`
-    )
+    lines.push(`Location: ${binding.file}:${binding.line}`)
+    lines.push(binding.bindingType === 'text'
+      ? `Rendered element text: ${formatValue(entry.result)}`
+      : `Current result: ${binding.bindingName} = ${formatValue(entry.result)}`)
     for (const dependency of entry.dependencies) {
       const result =
         dependency.status === 'available'

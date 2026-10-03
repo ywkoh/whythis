@@ -2,9 +2,14 @@ import { parse } from '@babel/parser'
 import * as traverseModule from '@babel/traverse'
 import type { NodePath } from '@babel/traverse'
 
-// @babel/traverse is CommonJS. Accessing its explicit default keeps this ESM
-// package compatible with NodeNext's strict CJS interop typing.
-const traverse = traverseModule.default as unknown as (
+// @babel/traverse is CommonJS. Node ESM sees its exports object as the default,
+// while Vite's CJS interop can expose the function as the default directly.
+const traverseExport = traverseModule.default as unknown
+const traverse = (
+  typeof traverseExport === 'function'
+    ? traverseExport
+    : (traverseExport as { default: unknown }).default
+) as (
   node: object,
   visitor: { Identifier(path: NodePath): void }
 ) => void
