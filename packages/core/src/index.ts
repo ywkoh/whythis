@@ -7,5 +7,6 @@ export type {
   ComputedMetadata,
   ComputedTrace,
   DependencyValue,
-  SelectionTrace
+  SelectionTrace,
+  StateChange
 } from './types.js'

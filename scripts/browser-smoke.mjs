@@ -133,7 +133,7 @@ try {
   const computedLine = (await readFile(join(root, 'playground/vue-vite/src/components/OrderButton.vue'), 'utf8'))
     .split('\n').findIndex((line) => line.includes('const canOrder = computed(')) + 1
 
-  async function selectedOrder(expectedDisabled) {
+  async function selectedOrder(expectedDisabled, expectedRecent = []) {
     await page.click(trigger)
     assert.equal(await page.evaluate(`${trigger}.dataset.active`), 'true', 'picker is active')
     await page.click(order)
@@ -155,6 +155,8 @@ try {
       line: computedLine,
       references: [{ path: 'stock', status: 'available', value: expectedDisabled ? 0 : 3 }]
     }])
+    assert.deepEqual(entry.recentChanges.map(({ path, before, after }) => ({ path, before, after })), expectedRecent)
+    for (const change of entry.recentChanges) assert.ok(Number.isFinite(change.at))
     const drawer = await page.evaluate("document.querySelector('#__whythis_overlay__').shadowRoot.querySelector('[data-whythis-content]').innerText")
     assert.ok(drawer.includes(`OrderButton.vue:${expectedLine}`))
     assert.ok(drawer.includes(`disabled = ${expectedDisabled}`))
@@ -162,6 +164,10 @@ try {
     assert.match(drawer, /computed getter source references \(static\)/i)
     assert.ok(drawer.includes(`canOrder at src/components/OrderButton.vue:${computedLine}`))
     assert.ok(drawer.includes(`stock = ${expectedDisabled ? 0 : 3}`))
+    if (expectedRecent.length > 0) {
+      assert.match(drawer, /recent observed changes/i)
+      assert.ok(drawer.includes(`${expectedRecent[0].before} → ${expectedRecent[0].after}`))
+    }
   }
 
   await selectedOrder(true)
@@ -182,14 +188,28 @@ try {
 
   await page.click(stock)
   assert.equal(await page.evaluate(`${order}.disabled`), false)
-  await selectedOrder(false)
+  await selectedOrder(false, [{ path: 'stock', before: '0', after: '3' }])
+
+  await page.evaluate("document.querySelector('#__whythis_overlay__').shadowRoot.querySelector('[data-whythis-ai]').click()")
+  const aiContext = await page.evaluate('window.__copiedTrace')
+  assert.ok(aiContext.includes('# WhyThis Debug Context'))
+  assert.ok(aiContext.includes('## Recent observed changes'))
+  assert.ok(aiContext.includes('stock: 0 → 3'))
+  assert.ok(aiContext.includes('writer unknown'))
 
   // Picking an enabled control must inspect it without running its click handler.
   await page.click(trigger)
   await page.click(stock)
   assert.equal(await page.evaluate(`${order}.disabled`), false)
 
-  console.log('Browser smoke passed: Order trace, computed stock reference, source lines, copy, and click suppression')
+  await page.click(stock)
+  assert.equal(await page.evaluate(`${order}.disabled`), true)
+  await selectedOrder(true, [
+    { path: 'stock', before: '3', after: '0' },
+    { path: 'stock', before: '0', after: '3' }
+  ])
+
+  console.log('Browser smoke passed: Order trace, stock history, Copy for AI, source lines, and click suppression')
 } finally {
   page?.socket.close()
   async function stop(child) {

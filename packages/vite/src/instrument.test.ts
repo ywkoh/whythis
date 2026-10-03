@@ -91,6 +91,8 @@ const canOrder = computed(() => stock.value > 0)
       name: 'canOrder', file: 'src/OrderButton.vue', line: 4, references: ['stock']
     }])
     expect(result.code).toContain('"references":["stock"]')
+    expect(result.code).toContain('__WHYTHIS_trackRef(stock, "stock")')
+    expect(result.code).not.toContain('__WHYTHIS_trackRef(canOrder')
   })
 
   it('does not instrument production mode', () => {

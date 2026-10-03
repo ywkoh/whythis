@@ -22,13 +22,15 @@ export default defineConfig({
 })
 ```
 
-Start the development server, click the **WhyThis** button, then select an element. The drawer shows its supported bindings and their direct template dependencies. **Copy trace** copies the current trace as text.
+Start the development server, click the **WhyThis** button, then select an element. The drawer shows its supported bindings, direct template dependencies, and recent observed changes. **Copy trace** copies a plain text trace; **Copy for AI** copies structured Markdown.
 
 For example, selecting `<button :disabled="!canOrder">Order</button>` can show that `disabled` is `true`, `canOrder` is `false`, and the `canOrder` getter references `stock`, whose current value is `0`.
 
 ## Current scope
 
-WhyThis instruments native element `v-bind` directives and text interpolations in Vue single-file components. It reads direct references written in the template expression. It also analyzes named, top-level Composition API `computed()` getters in `<script setup>` and shows their direct local source references and current values when available. These references come from source code; they do not prove which conditional branch ran or show which code last changed a value. Pinia, network requests, mutation history, and component bindings are not included.
+WhyThis instruments native element `v-bind` directives and text interpolations in Vue single-file components. It reads direct references written in the template expression. It also analyzes named, top-level Composition API `computed()` getters in `<script setup>` and shows their direct local source references and current values when available. These references come from source code; they do not prove which conditional branch ran.
+
+Relevant local `ref()` and `shallowRef()` values in `<script setup>` are observed in development. The drawer shows recent changes per component instance, including previous and new values and time. History starts after setup, is bounded in memory, and does not identify the writer location. Pinia mutation details, network requests, and component bindings are not included.
 
 The plugin only transforms files when Vite's mode is `development`. Some value lookups rely on Vue development internals and may be unavailable with other Vue versions. Sensitive-looking fields such as tokens and passwords are redacted in the trace.
 

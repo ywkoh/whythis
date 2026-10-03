@@ -1,5 +1,6 @@
+import type { SelectionTrace } from '@whythis/core'
 import { describe, expect, it } from 'vitest'
-import { formatValue, traceAsText } from './trace.js'
+import { formatValue, traceAsMarkdown, traceAsText } from './trace.js'
 
 describe('trace formatting', () => {
   it('does not recursively serialize arbitrary objects', () => {
@@ -7,8 +8,8 @@ describe('trace formatting', () => {
     expect(formatValue(['one', 'two'])).toBe('[Array(2)]')
   })
 
-  it('keeps redacted dependency values out of a console-copy trace', () => {
-    const output = traceAsText({
+  it('keeps redacted dependency values out of both copy formats', () => {
+    const trace: SelectionTrace = {
       selected: '<input>',
       component: null,
       source: null,
@@ -31,12 +32,17 @@ describe('trace formatting', () => {
           file: 'src/Login.vue',
           line: 1,
           references: [{ path: 'secretValue', status: 'redacted', value: 'do-not-copy' }]
-        }]
+        }],
+        recentChanges: [{ path: 'accessToken', before: '[redacted]', after: '[redacted]', at: 0 }]
       }]
-    })
+    }
+    const output = traceAsText(trace)
+    const markdown = traceAsMarkdown(trace)
     expect(output).toContain('Direct dependency: accessToken = [redacted]')
     expect(output).toContain('Getter source reference: secretValue = [redacted]')
     expect(output).not.toContain('do-not-copy')
+    expect(markdown).toContain('secretValue = [redacted]')
+    expect(markdown).not.toContain('do-not-copy')
   })
 
   it('labels template dependencies as direct', () => {
@@ -59,7 +65,8 @@ describe('trace formatting', () => {
           },
           result: true,
           dependencies: [{ path: 'canOrder', status: 'available', value: false }],
-          computed: []
+          computed: [],
+          recentChanges: []
         }
       ]
     })

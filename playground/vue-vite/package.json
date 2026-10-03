@@ -8,8 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@whythis/vite": "0.1.1",
-    "@whythis/vue": "0.1.1",
+    "@whythis/vite": "0.2.0",
+    "@whythis/vue": "0.2.0",
     "vue": "^3.5.13"
   },
   "devDependencies": {

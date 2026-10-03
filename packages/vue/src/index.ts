@@ -1,6 +1,7 @@
 import type { BindingMetadata, ComputedMetadata } from '@whythis/core'
 import { BindingRegistry } from '@whythis/core'
 import { ensureOverlay } from './overlay.js'
+export { trackRef } from './history.js'
 
 const REGISTRY_KEY = '__whythis_registry__'
 
@@ -26,5 +27,5 @@ export function registerMetadata(
   ensureOverlay(current)
 }
 
-export { formatValue, inspectElement, traceAsText } from './trace.js'
+export { formatValue, inspectElement, traceAsMarkdown, traceAsText } from './trace.js'
 export type { VueInternalInstance } from './component-adapter.js'

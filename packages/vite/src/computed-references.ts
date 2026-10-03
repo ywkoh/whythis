@@ -8,6 +8,11 @@ interface ScriptSource {
   loc: { start: { offset: number } }
 }
 
+export interface ComputedAnalysis {
+  computed: ComputedMetadata[]
+  trackableRefs: string[]
+}
+
 function lineAt(source: string, offset: number): number {
   let line = 1
   for (let index = 0; index < offset; index += 1) {
@@ -17,12 +22,12 @@ function lineAt(source: string, offset: number): number {
 }
 
 /** Finds named, top-level Composition API computed getters without changing them. */
-export function extractComputedReferences(
+export function analyzeComputedReferences(
   source: string,
   script: ScriptSource | null,
   file: string
-): ComputedMetadata[] {
-  if (!script) return []
+): ComputedAnalysis {
+  if (!script) return { computed: [], trackableRefs: [] }
 
   try {
     const ast = parse(script.content, {
@@ -34,6 +39,7 @@ export function extractComputedReferences(
     const importNames = new Map<string, string>()
     const stateNames = new Set<string>()
     const refLikeNames = new Set<string>()
+    const trackableRefs = new Set<string>()
 
     for (const statement of ast.program.body) {
       if (statement.type === 'ImportDeclaration' && statement.source.value === 'vue') {
@@ -58,8 +64,12 @@ export function extractComputedReferences(
         if (declaration.id.type !== 'Identifier' || declaration.init?.type !== 'CallExpression') continue
         const callee = declaration.init.callee
         if (callee.type !== 'Identifier') continue
-        if (['ref', 'shallowRef', 'customRef', 'toRef', 'computed'].includes(importNames.get(callee.name) ?? '')) {
+        const imported = importNames.get(callee.name)
+        if (['ref', 'shallowRef', 'customRef', 'toRef', 'computed'].includes(imported ?? '')) {
           refLikeNames.add(declaration.id.name)
+        }
+        if (imported === 'ref' || imported === 'shallowRef') {
+          trackableRefs.add(declaration.id.name)
         }
       }
     }
@@ -91,9 +101,9 @@ export function extractComputedReferences(
         })
       }
     }
-    return computed
+    return { computed, trackableRefs: [...trackableRefs].sort() }
   } catch {
     // In-progress or unsupported script syntax must not stop Vite transforms.
-    return []
+    return { computed: [], trackableRefs: [] }
   }
 }

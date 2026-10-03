@@ -1,6 +1,6 @@
 import type { SelectionTrace } from '@whythis/core'
 import { BindingRegistry } from '@whythis/core'
-import { formatValue, inspectElement, traceAsText } from './trace.js'
+import { formatValue, inspectElement, traceAsMarkdown, traceAsText } from './trace.js'
 
 const OVERLAY_ID = '__whythis_overlay__'
 
@@ -96,6 +96,13 @@ function renderTrace(root: ShadowRoot, trace: SelectionTrace): void {
         append('code', `${reference.path} = ${value}`, 'dependency')
       }
     }
+    append('p', 'Recent observed changes', 'label')
+    if (entry.recentChanges.length === 0) {
+      append('p', 'None observed since instrumentation started.', 'notice')
+    }
+    for (const change of entry.recentChanges) {
+      append('code', `${change.path}: ${change.before} → ${change.after} at ${new Date(change.at).toLocaleTimeString()} (writer unknown)`)
+    }
   }
 }
 
@@ -117,7 +124,7 @@ function createOverlay(registry: BindingRegistry): OverlayState {
     </style>
     <button id="whythis-trigger" type="button">WhyThis</button>
     <div id="whythis-highlight"></div>
-    <aside data-whythis-drawer hidden><button class="close" type="button" data-whythis-close>Close</button><div data-whythis-content></div><div class="actions"><button type="button" data-whythis-copy>Copy trace</button><button type="button" data-whythis-log>Log to console</button></div></aside>
+    <aside data-whythis-drawer hidden><button class="close" type="button" data-whythis-close>Close</button><div data-whythis-content></div><div class="actions"><button type="button" data-whythis-copy>Copy trace</button><button type="button" data-whythis-ai>Copy for AI</button><button type="button" data-whythis-log>Log to console</button></div></aside>
   `
 
   let selecting = false
@@ -207,6 +214,9 @@ function createOverlay(registry: BindingRegistry): OverlayState {
   })
   root.querySelector('[data-whythis-copy]')?.addEventListener('click', async () => {
     if (lastSelection) await navigator.clipboard?.writeText(traceAsText(lastSelection))
+  })
+  root.querySelector('[data-whythis-ai]')?.addEventListener('click', async () => {
+    if (lastSelection) await navigator.clipboard?.writeText(traceAsMarkdown(lastSelection))
   })
   root.querySelector('[data-whythis-log]')?.addEventListener('click', () => {
     if (lastSelection) console.info('[WhyThis]', lastSelection)

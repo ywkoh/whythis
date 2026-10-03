@@ -35,11 +35,20 @@ export interface DependencyValue {
   value?: unknown
 }
 
+export interface StateChange {
+  path: string
+  before: string
+  after: string
+  /** Unix time in milliseconds. */
+  at: number
+}
+
 export interface BindingTrace {
   binding: BindingMetadata
   result: unknown
   dependencies: DependencyValue[]
   computed: ComputedTrace[]
+  recentChanges: StateChange[]
 }
 
 export interface ComputedTrace {

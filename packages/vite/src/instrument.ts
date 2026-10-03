@@ -8,7 +8,7 @@ import {
 import { parse } from '@vue/compiler-sfc'
 import { relative } from 'node:path'
 import { stableId, type BindingMetadata, type ComputedMetadata } from '@whythis/core'
-import { extractComputedReferences } from './computed-references.js'
+import { analyzeComputedReferences } from './computed-references.js'
 import { extractDependencies } from './dependencies.js'
 
 export interface InstrumentOptions {
@@ -93,6 +93,21 @@ function appendRegistration(
   }
 }
 
+function appendTracking(
+  script: NonNullable<ReturnType<typeof parse>['descriptor']['scriptSetup']>,
+  refNames: string[]
+): { offset: number; text: string } {
+  return {
+    offset: script.loc.end.offset,
+    text: [
+      '',
+      "import { trackRef as __WHYTHIS_trackRef } from '@whythis/vue'",
+      ...refNames.map((name) => `__WHYTHIS_trackRef(${name}, ${JSON.stringify(name)})`),
+      ''
+    ].join('\n')
+  }
+}
+
 function applyInsertions(source: string, insertions: { offset: number; text: string }[]): string {
   return [...insertions]
     .sort((a, b) => b.offset - a.offset)
@@ -125,7 +140,8 @@ export function instrumentVueSfc(source: string, options: InstrumentOptions): In
 
   const file = projectPath(options.filename, options.root)
   const bindings: BindingMetadata[] = []
-  const computed = extractComputedReferences(source, parsed.descriptor.scriptSetup, file)
+  const analysis = analyzeComputedReferences(source, parsed.descriptor.scriptSetup, file)
+  const computed = analysis.computed
   const elements = new Map<number, InstrumentedElement>()
 
   const elementFor = (element: ElementNode): InstrumentedElement => {
@@ -212,6 +228,14 @@ export function instrumentVueSfc(source: string, options: InstrumentOptions): In
       const offset = source[end - 1] === '/' ? end - 1 : end
       insertions.push({ offset, text: ` data-whythis-id="${element.id}"` })
     }
+  }
+  const relevantPaths = new Set([
+    ...bindings.flatMap((binding) => binding.dependencies),
+    ...computed.flatMap((entry) => entry.references)
+  ])
+  const trackedRefs = analysis.trackableRefs.filter((name) => relevantPaths.has(name))
+  if (parsed.descriptor.scriptSetup && trackedRefs.length > 0) {
+    insertions.push(appendTracking(parsed.descriptor.scriptSetup, trackedRefs))
   }
   insertions.push(appendRegistration(source, parsed.descriptor, file, bindings, computed))
 
