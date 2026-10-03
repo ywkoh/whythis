@@ -130,6 +130,8 @@ try {
   const stock = "document.querySelector('.controls button')"
   const expectedLine = (await readFile(join(root, 'playground/vue-vite/src/components/OrderButton.vue'), 'utf8'))
     .split('\n').findIndex((line) => line.includes(':disabled="!canOrder"')) + 1
+  const computedLine = (await readFile(join(root, 'playground/vue-vite/src/components/OrderButton.vue'), 'utf8'))
+    .split('\n').findIndex((line) => line.includes('const canOrder = computed(')) + 1
 
   async function selectedOrder(expectedDisabled) {
     await page.click(trigger)
@@ -147,10 +149,19 @@ try {
     assert.deepEqual(entry.dependencies, [{
       path: 'canOrder', status: 'available', value: !expectedDisabled
     }])
+    assert.deepEqual(entry.computed, [{
+      name: 'canOrder',
+      file: 'src/components/OrderButton.vue',
+      line: computedLine,
+      references: [{ path: 'stock', status: 'available', value: expectedDisabled ? 0 : 3 }]
+    }])
     const drawer = await page.evaluate("document.querySelector('#__whythis_overlay__').shadowRoot.querySelector('[data-whythis-content]').innerText")
     assert.ok(drawer.includes(`OrderButton.vue:${expectedLine}`))
     assert.ok(drawer.includes(`disabled = ${expectedDisabled}`))
     assert.ok(drawer.includes(`canOrder = ${!expectedDisabled}`))
+    assert.match(drawer, /computed getter source references \(static\)/i)
+    assert.ok(drawer.includes(`canOrder at src/components/OrderButton.vue:${computedLine}`))
+    assert.ok(drawer.includes(`stock = ${expectedDisabled ? 0 : 3}`))
   }
 
   await selectedOrder(true)
@@ -166,6 +177,8 @@ try {
   assert.ok(copied.includes(`Location: src/components/OrderButton.vue:${expectedLine}`))
   assert.ok(copied.includes('Current result: disabled = true'))
   assert.ok(copied.includes('Direct dependency: canOrder = false'))
+  assert.ok(copied.includes(`Computed getter source (static): canOrder at src/components/OrderButton.vue:${computedLine}`))
+  assert.ok(copied.includes('Getter source reference: stock = 0'))
 
   await page.click(stock)
   assert.equal(await page.evaluate(`${order}.disabled`), false)
@@ -176,7 +189,7 @@ try {
   await page.click(stock)
   assert.equal(await page.evaluate(`${order}.disabled`), false)
 
-  console.log('Browser smoke passed: disabled and enabled Order trace, source line, copy, and click suppression')
+  console.log('Browser smoke passed: Order trace, computed stock reference, source lines, copy, and click suppression')
 } finally {
   page?.socket.close()
   async function stop(child) {

@@ -75,6 +75,24 @@ const label = 'Ready'
     )
   })
 
+  it('registers computed getter references alongside template bindings', () => {
+    const computedSource = `<script setup lang="ts">
+import { computed, ref } from 'vue'
+const stock = ref(0)
+const canOrder = computed(() => stock.value > 0)
+</script>
+<template><button :disabled="!canOrder">Order</button></template>`
+    const result = instrumentVueSfc(computedSource, {
+      filename: '/workspace/src/OrderButton.vue',
+      root: '/workspace',
+      enabled: true
+    })!
+    expect(result.computed).toEqual([{
+      name: 'canOrder', file: 'src/OrderButton.vue', line: 4, references: ['stock']
+    }])
+    expect(result.code).toContain('"references":["stock"]')
+  })
+
   it('does not instrument production mode', () => {
     expect(
       instrumentVueSfc(source, {

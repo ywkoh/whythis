@@ -81,6 +81,21 @@ function renderTrace(root: ShadowRoot, trace: SelectionTrace): void {
             : '[unavailable]'
       append('code', `${dependency.path} = ${value}`, 'dependency')
     }
+    for (const computed of entry.computed) {
+      append('p', 'Computed getter source references (static)', 'label')
+      append('code', `${computed.name} at ${computed.file}:${computed.line}`)
+      if (computed.references.length === 0) {
+        append('p', 'No supported local getter source reference found.', 'notice')
+      }
+      for (const reference of computed.references) {
+        const value = reference.status === 'available'
+          ? formatValue(reference.value)
+          : reference.status === 'redacted'
+            ? '[redacted]'
+            : '[unavailable]'
+        append('code', `${reference.path} = ${value}`, 'dependency')
+      }
+    }
   }
 }
 

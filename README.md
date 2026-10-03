@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL, click **WhyThis**, and select the disabled **Order** button. Toggle stock, then select it again to see `disabled` and `canOrder` update.
+Open the Vite URL, click **WhyThis**, and select the disabled **Order** button. The trace shows `disabled = true`, `canOrder = false`, and the computed getter's source reference `stock = 0`. Toggle stock, then select it again to see the values update.
 
 To verify the production exclusion:
 
@@ -40,13 +40,13 @@ export default defineConfig({
 
 `@whythis/vue` owns the Shadow DOM floating button, selection overlay, drawer, copy/log actions, and read-only `window.__WHYTHIS__.inspect(element)` plus `getLastSelection()`. It reads the selected DOM property/attribute for the current rendered result and evaluates only static direct expression references, such as `canOrder`, `stock`, and `member.active`.
 
-The direct dependency edge is exact source syntax—not an inferred reactive graph. `:disabled="!canOrder"` reports `canOrder`; it does not claim that `canOrder` depends on `stock`. Dynamic member paths, event handlers, component VNode bindings, Pinia, requests, mutation history, and computed internals are outside this MVP.
+The direct template dependency edge is exact source syntax. For a named, top-level Composition API `computed()` getter in `<script setup>`, WhyThis also reports direct local source references. `:disabled="!canOrder"` reports `canOrder`, then the getter source reference `stock` and its current value. This is static source analysis: it does not prove that a conditional branch read `stock` at runtime or identify the code that last changed it. Dynamic member paths, event handlers, component VNode bindings, Pinia, requests, and mutation history remain outside this MVP.
 
 ## Vue API boundary
 
 There is no Vue public API that maps an arbitrary DOM element to its owning component. The runtime has one isolated adapter which feature-detects the Vue development internals `element.__vueParentComponent` and `instance.setupState`. The former finds the owner; the latter is necessary because `<script setup>` bindings are intentionally closed on the public instance. The adapter tries the public `instance.proxy` first and degrades to `[unavailable]` if either internal field changes. No other module uses Vue internals.
 
-This makes DOM ownership and `<script setup>` value lookup **feasible with a documented Vue-version limitation**, rather than a claimed public guarantee. SFC/template AST analysis and the compact DOM-ID registry are reliable. Runtime computed dependency provenance is not safe for this MVP: Vue debug hooks expose reactivity events but do not provide a stable, general mapping back to template names. A realistic next phase is an opt-in dev transform around `computed()` that records reads while a named computed getter runs, clearly labels that data as instrumented provenance, and never fabricates a missing edge.
+This makes DOM ownership and `<script setup>` value lookup **feasible with a documented Vue-version limitation**, rather than a claimed public guarantee. SFC/template AST analysis and the compact DOM-ID registry are reliable. The computed link is limited to statically recognized top-level `computed()` declarations with function getters in `<script setup>`. Runtime computed dependency provenance would require separate opt-in instrumentation; the current source references must not be presented as observed reactive reads.
 
 ## Test
 
@@ -62,4 +62,4 @@ To run the browser smoke test for the playground's Order button, install Chrome 
 npm run test:browser
 ```
 
-Set `CHROME_PATH` if the browser executable is outside the standard macOS or Linux locations. This checks the disabled and enabled button trace, source line, copied text, and picker click suppression in a real browser.
+Set `CHROME_PATH` if the browser executable is outside the standard macOS or Linux locations. This checks the disabled and enabled button trace, computed getter source reference, source lines, copied text, and picker click suppression in a real browser.

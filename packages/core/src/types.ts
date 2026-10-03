@@ -21,6 +21,14 @@ export interface BindingMetadata {
   line: number
 }
 
+/** Direct source references in a Composition API computed getter. */
+export interface ComputedMetadata {
+  name: string
+  file: string
+  line: number
+  references: string[]
+}
+
 export interface DependencyValue {
   path: string
   status: 'available' | 'unavailable' | 'redacted'
@@ -31,6 +39,15 @@ export interface BindingTrace {
   binding: BindingMetadata
   result: unknown
   dependencies: DependencyValue[]
+  computed: ComputedTrace[]
+}
+
+export interface ComputedTrace {
+  name: string
+  file: string
+  line: number
+  /** Static getter references with their current values, not runtime tracking. */
+  references: DependencyValue[]
 }
 
 export interface SelectionTrace {

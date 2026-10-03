@@ -4,6 +4,8 @@ export type {
   BindingKind,
   BindingMetadata,
   BindingTrace,
+  ComputedMetadata,
+  ComputedTrace,
   DependencyValue,
   SelectionTrace
 } from './types.js'

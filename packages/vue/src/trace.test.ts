@@ -8,30 +8,35 @@ describe('trace formatting', () => {
   })
 
   it('keeps redacted dependency values out of a console-copy trace', () => {
-    expect(
-      traceAsText({
-        selected: '<input>',
-        component: null,
-        source: null,
-        bindings: [
-          {
-            binding: {
-              id: 'wt-token',
-              elementId: 'wt-el-token',
-              file: 'src/Login.vue',
-              element: 'input',
-              bindingType: 'attribute',
-              bindingName: 'value',
-              expression: 'accessToken',
-              dependencies: ['accessToken'],
-              line: 2
-            },
-            result: '[redacted]',
-            dependencies: [{ path: 'accessToken', status: 'redacted' }]
-          }
-        ]
-      })
-    ).toContain('Direct dependency: accessToken = [redacted]')
+    const output = traceAsText({
+      selected: '<input>',
+      component: null,
+      source: null,
+      bindings: [{
+        binding: {
+          id: 'wt-token',
+          elementId: 'wt-el-token',
+          file: 'src/Login.vue',
+          element: 'input',
+          bindingType: 'attribute',
+          bindingName: 'value',
+          expression: 'accessToken',
+          dependencies: ['accessToken'],
+          line: 2
+        },
+        result: '[redacted]',
+        dependencies: [{ path: 'accessToken', status: 'redacted' }],
+        computed: [{
+          name: 'accessToken',
+          file: 'src/Login.vue',
+          line: 1,
+          references: [{ path: 'secretValue', status: 'redacted', value: 'do-not-copy' }]
+        }]
+      }]
+    })
+    expect(output).toContain('Direct dependency: accessToken = [redacted]')
+    expect(output).toContain('Getter source reference: secretValue = [redacted]')
+    expect(output).not.toContain('do-not-copy')
   })
 
   it('labels template dependencies as direct', () => {
@@ -53,7 +58,8 @@ describe('trace formatting', () => {
             line: 8
           },
           result: true,
-          dependencies: [{ path: 'canOrder', status: 'available', value: false }]
+          dependencies: [{ path: 'canOrder', status: 'available', value: false }],
+          computed: []
         }
       ]
     })

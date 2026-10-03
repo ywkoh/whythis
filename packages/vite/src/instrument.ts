@@ -7,7 +7,8 @@ import {
 } from '@vue/compiler-dom'
 import { parse } from '@vue/compiler-sfc'
 import { relative } from 'node:path'
-import { stableId, type BindingMetadata } from '@whythis/core'
+import { stableId, type BindingMetadata, type ComputedMetadata } from '@whythis/core'
+import { extractComputedReferences } from './computed-references.js'
 import { extractDependencies } from './dependencies.js'
 
 export interface InstrumentOptions {
@@ -24,6 +25,7 @@ interface InstrumentedElement {
 export interface InstrumentResult {
   code: string
   bindings: BindingMetadata[]
+  computed: ComputedMetadata[]
 }
 
 function projectPath(filename: string, root: string): string {
@@ -64,12 +66,13 @@ function appendRegistration(
   source: string,
   descriptor: ReturnType<typeof parse>['descriptor'],
   file: string,
-  bindings: BindingMetadata[]
+  bindings: BindingMetadata[],
+  computed: ComputedMetadata[]
 ): { offset: number; text: string } {
   const registration = [
     '',
     "import { registerMetadata as __WHYTHIS_registerMetadata } from '@whythis/vue'",
-    `__WHYTHIS_registerMetadata(${JSON.stringify(file)}, ${JSON.stringify(bindings)})`,
+    `__WHYTHIS_registerMetadata(${JSON.stringify(file)}, ${JSON.stringify(bindings)}, ${JSON.stringify(computed)})`,
     ''
   ].join('\n')
 
@@ -122,6 +125,7 @@ export function instrumentVueSfc(source: string, options: InstrumentOptions): In
 
   const file = projectPath(options.filename, options.root)
   const bindings: BindingMetadata[] = []
+  const computed = extractComputedReferences(source, parsed.descriptor.scriptSetup, file)
   const elements = new Map<number, InstrumentedElement>()
 
   const elementFor = (element: ElementNode): InstrumentedElement => {
@@ -209,7 +213,7 @@ export function instrumentVueSfc(source: string, options: InstrumentOptions): In
       insertions.push({ offset, text: ` data-whythis-id="${element.id}"` })
     }
   }
-  insertions.push(appendRegistration(source, parsed.descriptor, file, bindings))
+  insertions.push(appendRegistration(source, parsed.descriptor, file, bindings, computed))
 
-  return { code: applyInsertions(source, insertions), bindings }
+  return { code: applyInsertions(source, insertions), bindings, computed }
 }

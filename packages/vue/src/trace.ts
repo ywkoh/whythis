@@ -53,11 +53,24 @@ function selectedSummary(element: Element): string {
   return `<${[tag, ...attributes].join(' ')}>`
 }
 
-function traceBinding(element: Element, binding: BindingMetadata): BindingTrace {
+function traceBinding(
+  element: Element,
+  binding: BindingMetadata,
+  registry: BindingRegistry
+): BindingTrace {
   return {
     binding,
     result: renderedBindingValue(element, binding),
-    dependencies: binding.dependencies.map((path) => dependencyValue(element, path))
+    dependencies: binding.dependencies.map((path) => dependencyValue(element, path)),
+    computed: binding.dependencies.flatMap((name) => {
+      const metadata = registry.getComputed(binding.file, name)
+      return metadata ? [{
+        name,
+        file: metadata.file,
+        line: metadata.line,
+        references: metadata.references.map((path) => dependencyValue(element, path))
+      }] : []
+    })
   }
 }
 
@@ -85,7 +98,7 @@ export function inspectElement(element: Element, registry: BindingRegistry): Sel
     selected: selectedSummary(selected),
     component: componentName(component),
     source: bindings[0]?.file ?? component?.type?.__file ?? null,
-    bindings: bindings.map((binding) => traceBinding(selected, binding)),
+    bindings: bindings.map((binding) => traceBinding(selected, binding, registry)),
     ...(bindings.length === 0
       ? { message: 'The element has a WhyThis ID but no currently registered metadata.' }
       : {})
@@ -126,6 +139,17 @@ export function traceAsText(trace: SelectionTrace): string {
             ? '[redacted]'
             : '[unavailable]'
       lines.push(`Direct dependency: ${dependency.path} = ${result}`)
+    }
+    for (const computed of entry.computed) {
+      lines.push(`Computed getter source (static): ${computed.name} at ${computed.file}:${computed.line}`)
+      for (const reference of computed.references) {
+        const value = reference.status === 'available'
+          ? formatValue(reference.value)
+          : reference.status === 'redacted'
+            ? '[redacted]'
+            : '[unavailable]'
+        lines.push(`Getter source reference: ${reference.path} = ${value}`)
+      }
     }
   }
   return lines.join('\n')

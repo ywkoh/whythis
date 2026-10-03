@@ -1,4 +1,4 @@
-import type { BindingMetadata } from '@whythis/core'
+import type { BindingMetadata, ComputedMetadata } from '@whythis/core'
 import { BindingRegistry } from '@whythis/core'
 import { ensureOverlay } from './overlay.js'
 
@@ -16,9 +16,13 @@ function registry(): BindingRegistry {
 }
 
 /** Called only by code injected by @whythis/vite in development SFC modules. */
-export function registerMetadata(file: string, bindings: BindingMetadata[]): void {
+export function registerMetadata(
+  file: string,
+  bindings: BindingMetadata[],
+  computed: ComputedMetadata[] = []
+): void {
   const current = registry()
-  current.register(file, bindings)
+  current.register(file, bindings, computed)
   ensureOverlay(current)
 }
 
