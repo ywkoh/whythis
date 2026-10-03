@@ -1,6 +1,6 @@
 {
   "name": "@whythis/vue",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Development runtime overlay for WhyThis Vue",
   "type": "module",
   "license": "MIT",
@@ -21,7 +21,7 @@
   },
   "files": ["dist"],
   "dependencies": {
-    "@whythis/core": "0.1.0"
+    "@whythis/core": "0.1.1"
   },
   "peerDependencies": {
     "vue": "^3.4.0"
